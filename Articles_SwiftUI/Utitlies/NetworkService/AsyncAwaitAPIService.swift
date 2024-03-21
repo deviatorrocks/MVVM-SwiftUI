@@ -12,23 +12,24 @@ class APIServiceWithAsyncAwait: APIServiceProtocol {
     func fetchArticles() {
     }
     
-    func fetchArticlesWithAsyncAwait() async throws {
+    func fetchArticlesWithAsyncAwait() async -> ([Article], ArticleError?) {
         let routeUrl = "\(Constants.BASE_URL)&apiKey=\(Constants.API_KEY)"
         do {
             let (data, response) = try await URLSession.shared.data(from: URL(string: routeUrl)!)
             guard let httpResponse = response as? HTTPURLResponse,
                   httpResponse.statusCode >= 200, httpResponse.statusCode <= 299 else {
-                throw ArticleError.invalidStatusCode
+                return([], ArticleError.invalidStatusCode)
             }
             
             let jsonDecoder = JSONDecoder()
             guard let localArticles = try? jsonDecoder.decode(News.self, from: data) else {
-                throw ArticleError.failedToDecode
+                return([], ArticleError.failedToDecode)
             }
-            
-            self.articlesList = localArticles.articles
+            return(localArticles.articles, ArticleError.failedToDecode)
+            //self.articlesList = localArticles.articles
         } catch {
-            throw ArticleError.customError(error: NSError(domain: "articles.com", code: 1234))
+            return([], ArticleError.customError(error: NSError(domain: "articles.com", code: 1234)))
+            //throw ArticleError.customError(error: NSError(domain: "articles.com", code: 1234))
         }
     }
 }
